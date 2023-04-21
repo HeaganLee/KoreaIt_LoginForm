@@ -1,12 +1,15 @@
 /**@jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
-import React from 'react';
-import { Link } from 'react-router-dom' 
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom' 
 import Input from '../../components/UI/atoms/Input/Input';
 import LoginInput from '../../components/UI/Login/LoginInput/LoginInput';
 import { FiUser, FiLock } from 'react-icons/fi';
 import { BsGoogle } from 'react-icons/bs';
 import { SiNaver, SiKakao } from 'react-icons/si';
+import axios from 'axios';
+import { authenticatedState } from '../../atoms/auth/AuthAtoms';
+import { useRecoilState } from 'recoil';
 
 const container = css`
     display: flex;
@@ -106,7 +109,47 @@ const register = css`
 
 `;
 
+const errorMsg = css`
+    margin-left: 5px;
+    margin-bottom: 20px;
+    font-size: 12px;
+    color: red;
+`;
+
 const Login = () => {
+    const [loginUser, setLogiUser] = useState({email:"", password:""});
+    const [errorMessages, setErrorMessages] = useState({email:"", passsword:""});
+    const [authenticated, setAuthenticated] = useRecoilState(authenticatedState);
+
+    const navigate = useNavigate();
+
+
+    const changeHandler = (e) => {
+        const {name, value} = e.target;
+        setLogiUser({...loginUser, [name]: value});
+    }
+
+    const loginHandSubmit = async() => {
+       
+        const option = {
+            headers: {
+                "Content-Type": "application/json" 
+            }
+        }
+
+        try {
+            const response = await axios.post("http://localhost:8080/auth/login", JSON.stringify(loginUser), option);
+            setErrorMessages({email:"",passsword:""});
+            const accessToken = response.data.grantType + " " + response.data.accessToken;
+            localStorage.setItem("accessToken", accessToken);
+            setAuthenticated(true);
+            alert(loginUser.email + "님 환영합니다.");
+            navigate("/");
+        } catch(error) {
+            setErrorMessages({email:"", passsword:"", ...error.response.data.errorData})
+        }
+    }
+
     return (
         <div css={container}>
             <header>
@@ -115,15 +158,17 @@ const Login = () => {
             <main css={mainContainer}>
                 <div css={authForm}>
                     <label css={inputLabel}>Email</label>
-                    <LoginInput type="email" placeholder="Type your email">
+                    <LoginInput type="email" onChange={changeHandler} placeholder="Type your email" name="email">
                         <FiUser/>
                     </LoginInput>
+                    <div css={errorMsg}>{errorMessages.email}</div>
                     <label css={inputLabel}>Password</label>
-                    <LoginInput type="password" placeholder="Type your password">
+                    <LoginInput type="password" onChange={changeHandler} placeholder="Type your password" name="password">
                         <FiLock/>
                     </LoginInput>
+                    <div css={errorMsg}>{errorMessages.password}</div>
                     <div css={forgotPassword}><Link to="/forgot/password">Forgot Password?</Link></div>
-                    <button css={loginButton}>LOGIN</button>
+                    <button css={loginButton} onClick={loginHandSubmit}>LOGIN</button>
                 </div>
             </main>
 
