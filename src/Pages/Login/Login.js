@@ -8,7 +8,7 @@ import { FiUser, FiLock } from 'react-icons/fi';
 import { BsGoogle } from 'react-icons/bs';
 import { SiNaver, SiKakao } from 'react-icons/si';
 import axios from 'axios';
-import { authenticatedState } from '../../atoms/auth/AuthAtoms';
+import { refeshState } from '../../atoms/auth/AuthAtoms';
 import { useRecoilState } from 'recoil';
 
 const container = css`
@@ -119,10 +119,9 @@ const errorMsg = css`
 const Login = () => {
     const [loginUser, setLogiUser] = useState({email:"", password:""});
     const [errorMessages, setErrorMessages] = useState({email:"", passsword:""});
-    const [authenticated, setAuthenticated] = useRecoilState(authenticatedState);
+    const [ refresh, setRefresh] = useRecoilState(refeshState);
 
     const navigate = useNavigate();
-
 
     const changeHandler = (e) => {
         const {name, value} = e.target;
@@ -142,8 +141,7 @@ const Login = () => {
             setErrorMessages({email:"",passsword:""});
             const accessToken = response.data.grantType + " " + response.data.accessToken;
             localStorage.setItem("accessToken", accessToken);
-            setAuthenticated(true);
-            alert(loginUser.email + "님 환영합니다.");
+            setRefresh(false);
             navigate("/");
         } catch(error) {
             setErrorMessages({email:"", passsword:"", ...error.response.data.errorData})
